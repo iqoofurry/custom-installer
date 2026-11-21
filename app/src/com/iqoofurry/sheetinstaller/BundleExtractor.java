@@ -368,15 +368,23 @@ final class BundleExtractor {
         return name.contains("asset_pack") || name.contains("assetpack");
     }
 
-    /** install_time_asset_pack-70877.apk → install_time_asset_pack */
+    /** install_time_asset_pack-70877.apk / install_time_asset_pack-master.apk → install_time_asset_pack */
     private static String assetPackModule(String entryName) {
         String name = baseName(entryName);
         if (name.toLowerCase(Locale.ROOT).endsWith(".apk")) {
             name = name.substring(0, name.length() - 4);
         }
+        // Отрезаем служебные суффиксы bundletool: -master, -70877, -master-70877.
         int dash = name.lastIndexOf('-');
-        if (dash > 0 && name.substring(dash + 1).matches("\\d+")) {
-            name = name.substring(0, dash);
+        while (dash > 0) {
+            String suffix = name.substring(dash + 1);
+            if (suffix.matches("\\d+") || "master".equalsIgnoreCase(suffix)
+                    || suffix.equalsIgnoreCase("standalone")) {
+                name = name.substring(0, dash);
+                dash = name.lastIndexOf('-');
+            } else {
+                break;
+            }
         }
         return name;
     }
