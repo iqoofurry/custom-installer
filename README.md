@@ -11,7 +11,6 @@
 
 - **Установка APK** — одиночные файлы, `.xapk` (с манифестом), `.apks` (включая `.apks` с `universal.apk`)
 - **Split APK** — установка минимального набора сплитов (base + язык + ABI + плотность), fallback на universal если сплит не подходит
-- **OBB** — автоматическое копирование `.obb` в `Android/obb/<package>/` через root после установки (ошибка не фатальна)
 - **XAPK** — установка `.xapk` (Android App Bundle в формате ZIP: манифест + набор APK + OBB)
 - **Root-установка** — сессионный `pm install-create` / `install-write` / `install-commit`, с `install-abandon` при ошибке
 - **Замена стока** — в один клик удаляет `com.android.packageinstaller` на сессию (`pm uninstall --user 0`), после перезагрузки сток восстанавливается
