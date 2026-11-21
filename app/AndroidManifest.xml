@@ -137,6 +137,35 @@
                     android:host="*"
                     android:mimeType="application/vnd.android.package-archive" />
             </intent-filter>
+
+            <!-- XAPK/APKS/APKM — браузер отдаёт как application/octet-stream или application/zip -->
+            <intent-filter android:priority="500">
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data
+                    android:scheme="content"
+                    android:host="*"
+                    android:mimeType="application/octet-stream" />
+                <data
+                    android:scheme="file"
+                    android:host="*"
+                    android:mimeType="application/octet-stream" />
+            </intent-filter>
+
+            <intent-filter android:priority="500">
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data
+                    android:scheme="content"
+                    android:host="*"
+                    android:mimeType="application/zip" />
+                <data
+                    android:scheme="file"
+                    android:host="*"
+                    android:mimeType="application/zip" />
+            </intent-filter>
         </activity>
 
         <provider

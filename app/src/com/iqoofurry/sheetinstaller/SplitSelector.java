@@ -51,15 +51,17 @@ final class SplitSelector {
             List<AppBundle.Part> parts = entry.getValue();
             List<AppBundle.Part> abiParts = new ArrayList<>();
             List<AppBundle.Part> densityParts = new ArrayList<>();
+            List<AppBundle.Part> languageParts = new ArrayList<>();
             AppBundle.Part master = null;
             for (AppBundle.Part part : parts) {
                 if (part.kind == AppBundle.KIND_MASTER) {
                     if (master == null || part == bundle.base) {
                         master = part;
                     }
-                } else if (part.kind == AppBundle.KIND_OTHER
-                        || part.kind == AppBundle.KIND_LANGUAGE) {
+                } else if (part.kind == AppBundle.KIND_OTHER) {
                     selected.add(part);
+                } else if (part.kind == AppBundle.KIND_LANGUAGE) {
+                    languageParts.add(part);
                 } else if (part.kind == AppBundle.KIND_ABI) {
                     abiParts.add(part);
                 } else if (part.kind == AppBundle.KIND_DENSITY) {
@@ -68,6 +70,12 @@ final class SplitSelector {
             }
             if (master != null) {
                 selected.add(master);
+            }
+            // Языковые сплиты: только язык устройства + английский, чтобы не
+            // ставить десятки мелких частей. Если таких нет — base использует
+            // встроенные ресурсы по умолчанию.
+            if (!languageParts.isEmpty()) {
+                selected.addAll(chooseLanguages(languageParts));
             }
             if (!abiParts.isEmpty()) {
                 AppBundle.Part abi = chooseAbi(abiParts);
@@ -139,6 +147,31 @@ final class SplitSelector {
             best = parts.get(0);
         }
         return best;
+    }
+
+    /**
+     * Языковые сплиты: берём язык устройства и английский.
+     * Ставить все десятки языков не нужно — base содержит ресурсы по умолчанию.
+     */
+    private static List<AppBundle.Part> chooseLanguages(List<AppBundle.Part> parts) {
+        List<AppBundle.Part> picked = new ArrayList<>();
+        String deviceLang = "en";
+        try {
+            android.content.res.Configuration cfg =
+                    android.content.res.Resources.getSystem().getConfiguration();
+            if (!cfg.getLocales().isEmpty()) {
+                deviceLang = cfg.getLocales().get(0).getLanguage();
+            }
+        } catch (Throwable ignored) {
+        }
+        String lang = deviceLang == null ? "en" : deviceLang.toLowerCase(Locale.ROOT);
+        for (AppBundle.Part part : parts) {
+            String config = part.config == null ? "" : part.config.toLowerCase(Locale.ROOT);
+            if (config.equals(lang) || config.equals("en")) {
+                picked.add(part);
+            }
+        }
+        return picked;
     }
 
     static boolean isAbi(String config) {

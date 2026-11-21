@@ -154,6 +154,11 @@ final class BundleExtractor {
                 if (lower.contains("standalone") || lower.contains("instant")) {
                     continue;
                 }
+                // Asset packs (install_time_asset_pack, fast_follow_asset_pack и т.п.)
+                // не устанавливаются через pm install-create и могут быть огромными.
+                if (lower.contains("asset_pack") || lower.contains("assetpack")) {
+                    continue;
+                }
                 if (!lower.endsWith(".apk")) {
                     continue;
                 }
@@ -208,12 +213,29 @@ final class BundleExtractor {
             base = bundle.universal;
         }
         if (base == null) {
+            // Нет base-файла (например, чистый app bundle без manifest.json).
+            // Берём самый большой APK как кандидат для анализа.
+            AppBundle.Part largest = null;
+            for (AppBundle.Part p : bundle.all) {
+                if (largest == null || p.size > largest.size) {
+                    largest = p;
+                }
+            }
+            if (largest != null) {
+                base = largest;
+                base.kind = AppBundle.KIND_MASTER;
+                base.module = "base";
+                base.splitId = null;
+                base.installName = "base.apk";
+            }
+        }
+        if (base == null) {
             deleteRecursive(workspace);
             throw new IOException("В архиве нет base APK — установить набор нельзя");
         }
         bundle.base = base;
 
-        validate(bundle, base);
+        validate(context, bundle, base);
 
         try {
             ApkInfo info = ApkAnalyzer.analyze(context, base.file);
@@ -336,11 +358,33 @@ final class BundleExtractor {
                 || SplitSelector.isLanguage(config) || "master".equalsIgnoreCase(config);
     }
 
-    private static void validate(AppBundle bundle, AppBundle.Part base) throws IOException {
-        if (base.packageName == null) {
+    private static void validate(Context context, AppBundle bundle, AppBundle.Part base) throws IOException {
+        if (base.entryName == null) {
             throw new IOException("Не удалось разобрать base APK");
         }
+        // Если base не получил метаданные через PackageManager, пытаемся
+        // достать их через ApkAnalyzer (читает AndroidManifest.xml напрямую).
+        if (base.packageName == null) {
+            try {
+                ApkInfo info = ApkAnalyzer.analyze(context, base.file);
+                if (info != null) {
+                    base.packageName = info.packageName;
+                    base.versionCode = info.versionCode;
+                    base.signers = info.signerHashes;
+                    base.minSdk = info.minSdk;
+                    base.targetSdk = info.targetSdk;
+                }
+            } catch (Throwable t) {
+                Log.w("CustomInstaller", "Cannot analyze base candidate: " + base.entryName, t);
+            }
+        }
+        // Если всё ещё нет — это фатально
+        if (base.packageName == null) {
+            throw new IOException("Не удалось разобрать base APK\n"
+                    + "Формат приложения не поддерживается.");
+        }
         for (AppBundle.Part part : bundle.all) {
+            if (part == base) continue;
             if (part.packageName == null) {
                 // Метаданные недоступны штатному парсеру — доверяем base.
                 part.packageName = base.packageName;
@@ -356,6 +400,11 @@ final class BundleExtractor {
             }
             if (base.versionCode != part.versionCode) {
                 throw new IOException("У частей разный versionCode — набор повреждён");
+            }
+            // У split-файлов может не быть подписи — пропускаем проверку
+            if (part.signers == null || part.signers.isEmpty()) {
+                part.signers = base.signers;
+                continue;
             }
             if (!base.signers.equals(part.signers)) {
                 throw new IOException("Части подписаны разными ключами — набор повреждён");
@@ -567,11 +616,26 @@ final class BundleExtractor {
             name = name.substring(0, name.length() - 4);
         }
         if (name.toLowerCase(Locale.ROOT).startsWith("config.")) {
-            return name.substring("config.".length());
+            // config.arm64_v8a-70877 или config.arm64_v8a
+            String rest = name.substring("config.".length());
+            // Отрезаем суффикс с версией (-70877)
+            int lastDash = rest.lastIndexOf('-');
+            if (lastDash > 0) {
+                String suffix = rest.substring(lastDash + 1);
+                // Если после последней точки есть цифры — это версия, отрезаем
+                if (suffix.matches("\\d+")) {
+                    rest = rest.substring(0, lastDash);
+                }
+            }
+            return rest;
         }
         int dash = name.indexOf('-');
         if (dash > 0 && dash < name.length() - 1) {
-            return name.substring(dash + 1);
+            String afterDash = name.substring(dash + 1);
+            // afterDash может быть "70877" (версия) — пропускаем
+            if (!afterDash.matches("\\d+")) {
+                return afterDash;
+            }
         }
         return null;
     }
@@ -580,6 +644,10 @@ final class BundleExtractor {
         String name = baseName(entryName);
         if (name.toLowerCase(Locale.ROOT).endsWith(".apk")) {
             name = name.substring(0, name.length() - 4);
+        }
+        // config.arm64_v8a-70877 → module = base
+        if (name.toLowerCase(Locale.ROOT).startsWith("config.")) {
+            return "base";
         }
         int dash = name.indexOf('-');
         if (dash > 0) {

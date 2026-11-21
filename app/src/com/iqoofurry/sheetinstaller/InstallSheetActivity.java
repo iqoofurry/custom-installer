@@ -646,7 +646,7 @@ public class InstallSheetActivity extends Activity implements InstallEngine.Call
         }
     }
 
-    /** ABI показываем чипами: длинные списки аккуратно переносятся на новую строку. */
+    /** ABI показываем чипами: все в одну строку за счёт уменьшенного паддинга. */
     private void bindAbis(ApkInfo analyzed) {
         FlowLayout chips = findViewById(R.id.abi_chips);
         chips.removeAllViews();
@@ -658,7 +658,23 @@ public class InstallSheetActivity extends Activity implements InstallEngine.Call
             return;
         }
         for (String abi : analyzed.abis) {
-            addChip(chips, abi);
+            int padH = Ui.dp(this, 6); // уменьшенный паддинг
+            int padV = Ui.dp(this, 4);
+            TextView chip = new TextView(this);
+            chip.setText(abi);
+            chip.setTextAppearance(R.style.TextAppearanceCILabel);
+            chip.setTextSize(TypedValue.COMPLEX_UNIT_SP, 11f);
+            chip.setLetterSpacing(0.02f);
+            chip.setTextColor(getColor(R.color.md_on_surface));
+            chip.setBackground(Ui.pillChip(this, Ui.containerHighest(this)));
+            chip.setPadding(padH, padV, padH, padV);
+            ViewGroup.MarginLayoutParams lp = new ViewGroup.MarginLayoutParams(
+                    ViewGroup.LayoutParams.WRAP_CONTENT,
+                    ViewGroup.LayoutParams.WRAP_CONTENT);
+            lp.setMarginStart(Ui.dp(this, 2));
+            lp.setMarginEnd(Ui.dp(this, 2));
+            lp.bottomMargin = Ui.dp(this, 4);
+            chips.addView(chip, lp);
         }
     }
 
