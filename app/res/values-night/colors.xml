@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="md_primary">@android:color/system_accent1_200</color>
+    <color name="md_on_primary">#FF21005D</color>
+    <color name="md_primary_container">#FF4F378B</color>
+    <color name="md_on_primary_container">#FFEADDFF</color>
+    <color name="md_secondary">#FFCCC2DC</color>
+    <color name="md_on_secondary">#FF332D41</color>
+    <color name="md_secondary_container">#FF4A4458</color>
+    <color name="md_on_secondary_container">#FFE8DEF8</color>
+    <color name="md_tertiary">#FFEFB8C8</color>
+    <color name="md_on_tertiary">#FF492532</color>
+    <color name="md_tertiary_container">#FF633B48</color>
+    <color name="md_on_tertiary_container">#FFFFD8E4</color>
+
+    <color name="md_surface">#FF141218</color>
+    <color name="md_surface_container_low">#FF1D1B20</color>
+    <color name="md_surface_container">#FF211F26</color>
+    <color name="md_surface_container_high">#FF2B2930</color>
+    <color name="md_surface_container_highest">#FF36343B</color>
+    <color name="md_surface_variant">#FF49454F</color>
+    <color name="md_on_surface">#FFE6E0E9</color>
+    <color name="md_on_surface_variant">#FFCAC4D0</color>
+    <color name="md_outline">#FF938F99</color>
+    <color name="md_outline_variant">#FF49454F</color>
+
+    <color name="md_error">#FFF2B8B5</color>
+    <color name="md_error_container">#FF8C1D18</color>
+    <color name="md_on_error_container">#FFF9DEDC</color>
+
+    <color name="md_scrim">#FF000000</color>
+    <color name="md_ripple">#33FFFFFF</color>
+    <color name="ic_launcher_background">#FF6750A4</color>
+</resources>

@@ -1,0 +1,3 @@
+#!/sbin/sh
+echo "Install this module via KernelSU Manager"
+exit 0

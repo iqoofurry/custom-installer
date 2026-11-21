@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <dimen name="sheet_corner">28dp</dimen>
+    <dimen name="card_corner">28dp</dimen>
+    <dimen name="button_corner">28dp</dimen>
+    <dimen name="screen_padding">20dp</dimen>
+    <dimen name="touch_target">48dp</dimen>
+    <dimen name="hero_icon">88dp</dimen>
+</resources>
