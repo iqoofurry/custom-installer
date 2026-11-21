@@ -45,7 +45,6 @@
 - **Android SDK Platform 37**
 - **Build-tools 36.0.0**
 - **JDK 17+**
-- **Gradle 8.14.8+** (опционально, для Compose-сборки)
 
 ### Легаси-сборка (aapt2 + javac, без Compose)
 
