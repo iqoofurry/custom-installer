@@ -31,7 +31,7 @@ import java.util.zip.ZipFile;
 
 /** Определяет формат файла и безопасно распаковывает XAPK/APKS в кэш. */
 final class BundleExtractor {
-    private static final long MAX_UNPACKED = 2L * 1024 * 1024 * 1024;
+    private static final long MAX_UNPACKED = 16L * 1024 * 1024 * 1024;
     private static final int MAX_ENTRIES = 600;
     private static final long MAX_MANIFEST = 4L * 1024 * 1024;
 
@@ -154,11 +154,6 @@ final class BundleExtractor {
                 if (lower.contains("standalone") || lower.contains("instant")) {
                     continue;
                 }
-                // Asset packs (install_time_asset_pack, fast_follow_asset_pack и т.п.)
-                // не устанавливаются через pm install-create и могут быть огромными.
-                if (lower.contains("asset_pack") || lower.contains("assetpack")) {
-                    continue;
-                }
                 if (!lower.endsWith(".apk")) {
                     continue;
                 }
@@ -217,6 +212,9 @@ final class BundleExtractor {
             // Берём самый большой APK как кандидат для анализа.
             AppBundle.Part largest = null;
             for (AppBundle.Part p : bundle.all) {
+                if (p.kind == AppBundle.KIND_ASSET) {
+                    continue;
+                }
                 if (largest == null || p.size > largest.size) {
                     largest = p;
                 }
@@ -283,6 +281,18 @@ final class BundleExtractor {
                 part.minSdk = pkg.applicationInfo.minSdkVersion;
                 part.targetSdk = pkg.applicationInfo.targetSdkVersion;
             }
+        }
+
+        // Play Asset Delivery: install_time_asset_pack, fast_follow_asset_pack и т.п.
+        // Их обязательно нужно ставить вместе с base — иначе нативные движки
+        // (например, libg.so в Brawl Stars) падают на старте без игровых ассетов.
+        if (isAssetPackName(entryName)) {
+            String module = assetPackModule(entryName);
+            part.kind = AppBundle.KIND_ASSET;
+            part.module = module;
+            part.splitId = module;
+            part.installName = module;
+            return part;
         }
 
         String split = pkg == null ? null : splitName(pkg);
@@ -353,6 +363,24 @@ final class BundleExtractor {
         return "base".equals(name) || "base-master".equals(name) || "master".equals(name);
     }
 
+    private static boolean isAssetPackName(String entryName) {
+        String name = baseName(entryName).toLowerCase(Locale.ROOT);
+        return name.contains("asset_pack") || name.contains("assetpack");
+    }
+
+    /** install_time_asset_pack-70877.apk → install_time_asset_pack */
+    private static String assetPackModule(String entryName) {
+        String name = baseName(entryName);
+        if (name.toLowerCase(Locale.ROOT).endsWith(".apk")) {
+            name = name.substring(0, name.length() - 4);
+        }
+        int dash = name.lastIndexOf('-');
+        if (dash > 0 && name.substring(dash + 1).matches("\\d+")) {
+            name = name.substring(0, dash);
+        }
+        return name;
+    }
+
     private static boolean isKnownConfig(String config) {
         return SplitSelector.isAbi(config) || SplitSelector.isDensity(config)
                 || SplitSelector.isLanguage(config) || "master".equalsIgnoreCase(config);
@@ -385,6 +413,15 @@ final class BundleExtractor {
         }
         for (AppBundle.Part part : bundle.all) {
             if (part == base) continue;
+            if (part.kind == AppBundle.KIND_ASSET) {
+                // Asset packs не проверяем по подписи/версии — доверяем base.
+                part.packageName = base.packageName;
+                part.versionCode = base.versionCode;
+                part.signers = base.signers;
+                part.minSdk = base.minSdk;
+                part.targetSdk = base.targetSdk;
+                continue;
+            }
             if (part.packageName == null) {
                 // Метаданные недоступны штатному парсеру — доверяем base.
                 part.packageName = base.packageName;

@@ -19,6 +19,7 @@ final class AppBundle {
     static final int KIND_LANGUAGE = 3;
     static final int KIND_UNIVERSAL = 4;
     static final int KIND_OTHER = 5;
+    static final int KIND_ASSET = 6;
 
     static final class Part {
         File file;
@@ -40,6 +41,9 @@ final class AppBundle {
         String label() {
             if (kind == KIND_MASTER) {
                 return module;
+            }
+            if (kind == KIND_ASSET) {
+                return "asset pack";
             }
             if (config != null && !config.isEmpty()) {
                 return config;

@@ -58,7 +58,8 @@ final class SplitSelector {
                     if (master == null || part == bundle.base) {
                         master = part;
                     }
-                } else if (part.kind == AppBundle.KIND_OTHER) {
+                } else if (part.kind == AppBundle.KIND_OTHER
+                        || part.kind == AppBundle.KIND_ASSET) {
                     selected.add(part);
                 } else if (part.kind == AppBundle.KIND_LANGUAGE) {
                     languageParts.add(part);
