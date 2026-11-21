@@ -1051,22 +1051,14 @@ public class InstallSheetActivity extends Activity implements InstallEngine.Call
             if (workspace != null) {
                 BundleExtractor.deleteRecursive(workspace);
             }
-            boolean deleted = false;
             if (archive != null) {
-                deleted = deleteCacheCopy(archive) || deleted;
+                deleteCacheCopy(archive);
             }
             if (copy != null && !copy.equals(archive)) {
-                deleted = deleteCacheCopy(copy) || deleted;
+                deleteCacheCopy(copy);
             }
             if (auto && source != null) {
-                deleted = deleteSourceFile(source) || deleted;
-            }
-            if (deleted && auto) {
-                main.post(() -> {
-                    if (!isFinishing() && !isDestroyed()) {
-                        Toast.makeText(this, R.string.apk_deleted, Toast.LENGTH_SHORT).show();
-                    }
-                });
+                deleteSourceFile(source);
             }
         }, "ci-cleanup").start();
     }

@@ -143,7 +143,6 @@
     <string name="accent_mono">Графит</string>
     <string name="value_radius">%1$d dp</string>
     <string name="value_dim">%1$d%%</string>
-    <string name="apk_deleted">APK удалён с устройства</string>
 
     <string name="app_subtitle_short">Установка APK, XAPK и APKS одним нажатием, без системного установщика.</string>
     <string name="app_tagline">iqoofurry · MD3</string>
