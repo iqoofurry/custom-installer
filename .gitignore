@@ -5,9 +5,4 @@ local.properties
 .DS_Store
 Thumbs.db
 *.jks
-
-README.txt
-NOTES.md
-testapp/
-dist/TestApp*.apk
 .opencode/

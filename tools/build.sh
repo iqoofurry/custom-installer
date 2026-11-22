@@ -15,8 +15,6 @@ APKSIGNER="$TOOLS/apksigner"
 
 MAIN_KS="$KS_DIR/custominstaller.jks"
 MAIN_ALIAS="custominstaller"
-OTHER_KS="$KS_DIR/testapp-other.jks"
-OTHER_ALIAS="otherkey"
 
 require() {
     [ -e "$1" ] || { echo "Missing required path: $1" >&2; exit 1; }
@@ -53,7 +51,6 @@ create_keystore() {
 }
 
 create_keystore "$MAIN_KS" "$MAIN_ALIAS" "CN=Custom Installer, O=iqoofurry, C=RU"
-create_keystore "$OTHER_KS" "$OTHER_ALIAS" "CN=Other Test Key, O=iqoofurry, C=RU"
 
 sign_apk() {
     local input="$1" output="$2" ks="$3" alias="$4"
@@ -113,41 +110,6 @@ build_main() {
     sign_apk "$BUILD/aligned.apk" "$DIST/CustomInstaller.apk" "$MAIN_KS" "$MAIN_ALIAS"
 }
 
-build_testapp() {
-    local name="$1" code="$2" version_name="$3" ks="$4" alias="$5" output="$6"
-    local dir="$BUILD/testapp-$name"
-    echo "==> Building $output"
-    rm -rf "$dir"
-    mkdir -p "$dir/gen" "$dir/classes" "$dir/dex"
-
-    "$AAPT2" compile --dir "$ROOT/testapp/res" -o "$dir/res.zip"
-    "$AAPT2" link \
-        -o "$dir/base.apk" \
-        -I "$ANDROID_JAR" \
-        --manifest "$ROOT/testapp/AndroidManifest.xml" \
-        --java "$dir/gen" \
-        --min-sdk-version 31 \
-        --target-sdk-version 36 \
-        --version-code "$code" \
-        --version-name "$version_name" \
-        "$dir/res.zip"
-
-    find "$ROOT/testapp/src" "$dir/gen" -name '*.java' > "$dir/sources.txt"
-    "$JAVAC" -source 8 -target 8 -encoding UTF-8 \
-        -classpath "$ANDROID_JAR" \
-        -d "$dir/classes" \
-        @"$dir/sources.txt"
-
-    "$D8" --min-api 31 --lib "$ANDROID_JAR" --output "$dir/dex" \
-        $(find "$dir/classes" -name '*.class')
-
-    cp "$dir/base.apk" "$dir/unaligned.apk"
-    (cd "$dir/dex" && zip -q "$dir/unaligned.apk" classes.dex)
-
-    "$ZIPALIGN" -f 4 "$dir/unaligned.apk" "$dir/aligned.apk"
-    sign_apk "$dir/aligned.apk" "$DIST/$output" "$ks" "$alias"
-}
-
 build_module() {
     echo "==> Assembling module zip"
     local module="$ROOT/module"
@@ -175,9 +137,6 @@ build_module() {
 
 build_main
 build_module
-build_testapp "v1" 1 "1.0" "$MAIN_KS" "$MAIN_ALIAS" "TestApp-v1.apk"
-build_testapp "v2" 2 "2.0" "$MAIN_KS" "$MAIN_ALIAS" "TestApp-v2.apk"
-build_testapp "otherkey" 2 "2.0" "$OTHER_KS" "$OTHER_ALIAS" "TestApp-otherkey.apk"
 
 echo "==> Done"
 ls -l "$DIST"
