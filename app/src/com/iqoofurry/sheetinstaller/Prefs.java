@@ -58,14 +58,6 @@ final class Prefs {
         prefs(context).edit().putBoolean("auto_delete", value).apply();
     }
 
-    static String customBg(Context context) {
-        return prefs(context).getString("custom_bg", "");
-    }
-
-    static void setCustomBg(Context context, String path) {
-        prefs(context).edit().putString("custom_bg", path != null ? path : "").apply();
-    }
-
     static void reset(Context context) {
         prefs(context).edit().clear().apply();
     }

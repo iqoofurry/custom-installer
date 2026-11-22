@@ -1,15 +1,9 @@
 package com.iqoofurry.sheetinstaller;
 
 import android.app.Activity;
-import android.content.Intent;
 import android.content.res.ColorStateList;
-import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
 import android.graphics.Color;
 import android.graphics.Insets;
-import android.graphics.drawable.BitmapDrawable;
-import android.graphics.drawable.Drawable;
-import android.net.Uri;
 import android.os.Bundle;
 import android.view.Gravity;
 import android.view.View;
@@ -22,15 +16,8 @@ import android.widget.LinearLayout;
 import android.widget.SeekBar;
 import android.widget.Switch;
 import android.widget.TextView;
-import android.widget.Toast;
-
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.InputStream;
 
 public class SettingsActivity extends Activity {
-    private static final int PICK_BG_REQUEST = 100;
-
     private FlowLayout accentChips;
     private SeekBar seekRadius;
     private SeekBar seekDim;
@@ -38,8 +25,6 @@ public class SettingsActivity extends Activity {
     private TextView valueDim;
     private Switch switchOled;
     private Switch switchAutoDelete;
-    private Button btnCustomBg;
-    private Button btnResetCustomBg;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -72,21 +57,15 @@ public class SettingsActivity extends Activity {
         valueDim = findViewById(R.id.value_dim);
         switchOled = findViewById(R.id.switch_oled);
         switchAutoDelete = findViewById(R.id.switch_auto_delete);
-        btnCustomBg = findViewById(R.id.btn_custom_bg);
-        btnResetCustomBg = findViewById(R.id.btn_reset_custom_bg);
 
         findViewById(R.id.btn_back).setOnClickListener(v -> finish());
         findViewById(R.id.btn_reset).setOnClickListener(v -> resetAll());
-
-        btnCustomBg.setOnClickListener(v -> pickCustomBg());
-        btnResetCustomBg.setOnClickListener(v -> resetCustomBg());
 
         setupRadius();
         setupDim();
         setupSwitches();
         buildAccentChips();
         tintControls();
-        updateCustomBgButtons();
     }
 
     private void setupRadius() {
@@ -227,97 +206,6 @@ public class SettingsActivity extends Activity {
         if (reset != null) {
             reset.setTextColor(accent);
         }
-        Button bg = findViewById(R.id.btn_custom_bg);
-        if (bg != null) bg.setTextColor(accent);
-        Button bgReset = findViewById(R.id.btn_reset_custom_bg);
-        if (bgReset != null) bgReset.setTextColor(accent);
-    }
-
-    private void pickCustomBg() {
-        Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT);
-        intent.addCategory(Intent.CATEGORY_OPENABLE);
-        intent.setType("image/*");
-        startActivityForResult(intent, PICK_BG_REQUEST);
-    }
-
-    @Override
-    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-        super.onActivityResult(requestCode, resultCode, data);
-        if (requestCode == PICK_BG_REQUEST && resultCode == RESULT_OK && data != null) {
-            Uri uri = data.getData();
-            if (uri != null) {
-                saveCustomBg(uri);
-            }
-        }
-    }
-
-    private void saveCustomBg(Uri uri) {
-        try {
-            // Копируем выбранное изображение в внутреннее хранилище
-            File bgDir = new File(getFilesDir(), "custom_bg");
-            bgDir.mkdirs();
-            File bgFile = new File(bgDir, "bg.png");
-
-            InputStream input = getContentResolver().openInputStream(uri);
-            if (input == null) {
-                Toast.makeText(this, R.string.no_access, Toast.LENGTH_SHORT).show();
-                return;
-            }
-            FileOutputStream output = new FileOutputStream(bgFile);
-            byte[] buffer = new byte[65536];
-            int read;
-            while ((read = input.read(buffer)) != -1) {
-                output.write(buffer, 0, read);
-            }
-            output.close();
-            input.close();
-
-            Prefs.setCustomBg(this, bgFile.getAbsolutePath());
-            applyCustomBg();
-            Toast.makeText(this, R.string.custom_bg_applied, Toast.LENGTH_SHORT).show();
-        } catch (Exception e) {
-            Toast.makeText(this, getString(R.string.no_access) + ": " + e.getMessage(),
-                    Toast.LENGTH_LONG).show();
-        }
-    }
-
-    private void resetCustomBg() {
-        String path = Prefs.customBg(this);
-        if (path.isEmpty()) return;
-        File bgFile = new File(path);
-        if (bgFile.exists()) bgFile.delete();
-        Prefs.setCustomBg(this, null);
-        applyCustomBg();
-        Toast.makeText(this, R.string.custom_bg_reset, Toast.LENGTH_SHORT).show();
-    }
-
-    /** Применяет кастомный фон к root-вью, если файл есть, иначе убирает. */
-    private void applyCustomBg() {
-        String path = Prefs.customBg(this);
-        View root = findViewById(R.id.root_settings);
-        if (root == null) return;
-        if (path.isEmpty() || !new File(path).exists()) {
-            root.setBackgroundResource(R.drawable.bg_main_gradient);
-        } else {
-            Bitmap bm = BitmapFactory.decodeFile(path);
-            if (bm != null) {
-                root.setBackground(new BitmapDrawable(getResources(), bm));
-            } else {
-                root.setBackgroundResource(R.drawable.bg_main_gradient);
-            }
-        }
-        updateCustomBgButtons();
-    }
-
-    private void updateCustomBgButtons() {
-        boolean hasBg = !Prefs.customBg(this).isEmpty();
-        if (btnResetCustomBg != null) {
-            btnResetCustomBg.setEnabled(hasBg);
-            btnResetCustomBg.setAlpha(hasBg ? 1f : 0.4f);
-        }
-        if (btnCustomBg != null) {
-            btnCustomBg.setText(hasBg ? R.string.settings_custom_bg : R.string.set_custom_bg);
-        }
     }
 
     private void resetAll() {
@@ -328,15 +216,7 @@ public class SettingsActivity extends Activity {
         valueDim.setText(getString(R.string.value_dim, Prefs.dim(this)));
         switchOled.setChecked(Prefs.oled(this));
         switchAutoDelete.setChecked(Prefs.autoDelete(this));
-        // Сброс кастомного фона
-        String oldBg = Prefs.customBg(this);
-        if (!oldBg.isEmpty()) {
-            File bgFile = new File(oldBg);
-            if (bgFile.exists()) bgFile.delete();
-            Prefs.setCustomBg(this, null);
-        }
         buildAccentChips();
-        applyCustomBg();
         Ui.applyDynamicTheme(this);
         tintControls();
     }

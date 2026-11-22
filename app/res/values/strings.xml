@@ -125,12 +125,6 @@
     <string name="settings_dim">Затемнение фона</string>
     <string name="settings_oled">Чистый чёрный (OLED)</string>
     <string name="settings_oled_hint">Фон шторки и карточек становится полностью чёрным. Работает в тёмной теме.</string>
-    <string name="settings_custom_bg">Кастомный фон</string>
-    <string name="settings_custom_bg_hint">Выбери изображение, оно будет фоном в шторке установки. Картинка копируется внутрь приложения и не удаляется при перезапуске.</string>
-    <string name="set_custom_bg">Выбрать фон</string>
-    <string name="reset_custom_bg">Сбросить фон</string>
-    <string name="custom_bg_applied">Фон установлен</string>
-    <string name="custom_bg_reset">Фон сброшен</string>
     <string name="settings_after_install">После установки</string>
     <string name="settings_auto_delete">Удалять APK</string>
     <string name="settings_auto_delete_hint">Временная копия удаляется всегда. Исходный файл — только если у него есть путь (file://) и доступен root. Файлы из браузеров и мессенджеров (content://) остаются на месте.</string>
