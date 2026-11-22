@@ -172,10 +172,15 @@ final class Ui {
     }
 
     static Drawable tonalButton(Context c) {
-        int pc = primaryContainer(c);
+        int bg = containerHighest(c);
         int radius = largeRadius(c);
-        return new RippleDrawable(ColorStateList.valueOf(withAlpha(contrast(pc), 0.16f)),
-                rounded(c, pc, radius), rounded(c, Color.WHITE, radius));
+        return new RippleDrawable(ColorStateList.valueOf(withAlpha(contrast(bg), 0.16f)),
+                rounded(c, bg, radius), rounded(c, Color.WHITE, radius));
+    }
+
+    /** Цвет текста для нейтральных (серых) кнопок. */
+    static int onNeutralButton(Context c) {
+        return c.getColor(R.color.md_on_surface);
     }
 
     static Drawable mainBackground(Context c) {
@@ -236,7 +241,7 @@ final class Ui {
         }
         View check = a.findViewById(R.id.btn_check_root);
         if (check instanceof Button) {
-            ((Button) check).setTextColor(onPrimaryContainer(a));
+            ((Button) check).setTextColor(onNeutralButton(a));
         }
     }
 
@@ -267,7 +272,7 @@ final class Ui {
         }
         View cancel = a.findViewById(R.id.btn_cancel);
         if (cancel instanceof Button) {
-            ((Button) cancel).setTextColor(onPrimaryContainer(a));
+            ((Button) cancel).setTextColor(onNeutralButton(a));
         }
     }
 
