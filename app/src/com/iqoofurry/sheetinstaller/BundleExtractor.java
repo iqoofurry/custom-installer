@@ -237,6 +237,9 @@ final class BundleExtractor {
 
         try {
             ApkInfo info = ApkAnalyzer.analyze(context, base.file);
+            if (bundle.archive != null && bundle.archive.isFile()) {
+                info.sha256 = ApkAnalyzer.fileSha256(bundle.archive);
+            }
             bundle.baseInfo = info;
             SplitSelector.select(bundle);
             mergeMetadata(bundle);

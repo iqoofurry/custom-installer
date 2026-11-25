@@ -1,5 +1,5 @@
 #!/system/bin/sh
-ui_print "- Custom Installer 1.3"
+ui_print "- Custom Installer 1.4"
 ui_print "- Installing bottom-sheet package installer"
 ui_print "- System app only (no pm install, no pm disable)"
 

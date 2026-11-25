@@ -13,6 +13,9 @@
     <string name="done">Готово</string>
     <string name="retry">Повторить</string>
     <string name="open">Открыть</string>
+    <string name="app_info">О приложении</string>
+    <string name="hash_copied">Хэш SHA-256 скопирован</string>
+    <string name="check_virustotal">VirusTotal</string>
     <string name="preparing">Подготовка файла…</string>
     <string name="copying">Копирование…</string>
     <string name="installing">Установка…</string>
@@ -34,12 +37,14 @@
     <string name="label_size">Размер</string>
     <string name="label_sdk">SDK</string>
     <string name="label_signature">Подпись</string>
+    <string name="label_hash">Хэш SHA-256</string>
     <string name="label_abi">ABI</string>
     <string name="sig_match">Совпадает</string>
     <string name="sig_mismatch">Не совпадает</string>
     <string name="sig_new">Проверена</string>
     <string name="perm_danger">Опасно</string>
     <string name="perm_normal">Обычное</string>
+    <string name="perm_new">Новое</string>
     <string name="label_type">Тип</string>
     <string name="label_package">Пакет</string>
     <string name="value_abi_none">Нет native-кода</string>

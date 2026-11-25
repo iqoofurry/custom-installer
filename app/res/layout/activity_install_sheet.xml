@@ -290,6 +290,37 @@
                                     android:textAppearance="@style/TextAppearanceCIValue" />
                             </LinearLayout>
 
+                            <LinearLayout
+                                android:id="@+id/row_hash"
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:layout_marginTop="12dp"
+                                android:gravity="center_vertical"
+                                android:orientation="horizontal">
+
+                                <ImageView
+                                    android:layout_width="20dp"
+                                    android:layout_height="20dp"
+                                    android:contentDescription="@null"
+                                    android:src="@drawable/ic_shield"
+                                    android:tint="@color/md_primary" />
+
+                                <TextView
+                                    android:layout_width="0dp"
+                                    android:layout_height="wrap_content"
+                                    android:layout_marginStart="12dp"
+                                    android:layout_weight="1"
+                                    android:text="@string/label_hash"
+                                    android:textAppearance="@style/TextAppearanceCILabel" />
+
+                                <TextView
+                                    android:id="@+id/value_hash"
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:textAppearance="@style/TextAppearanceCIValue"
+                                    android:textColor="@color/md_primary" />
+                            </LinearLayout>
+
                             <com.iqoofurry.sheetinstaller.FlowLayout
                                 android:id="@+id/abi_chips"
                                 android:layout_width="match_parent"

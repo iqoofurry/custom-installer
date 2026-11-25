@@ -24,6 +24,8 @@ final class ApkInfo {
     long size;
     Drawable icon;
     String[] permissions;
+    Set<String> installedPermissions;
+    String sha256;
     Set<String> signerHashes;
     Set<String> abis;
     int type;

@@ -257,10 +257,11 @@ final class InstallEngine implements InstallResultReceiver.Listener {
         command.append("cp ").append(RootShell.quote(source)).append(' ')
                 .append(RootShell.quote(remote)).append(" && ");
         command.append("chmod 644 ").append(RootShell.quote(remote)).append(" && ");
-        command.append("pm install -r -d");
+        command.append("pm install -r -d -t");
         if (installerPackage != null && !installerPackage.isEmpty()) {
             command.append(" -i ").append(RootShell.quote(installerPackage));
         }
+        appendLowTargetSdkBypass(command);
         command.append(" --user 0 ").append(RootShell.quote(remote));
         command.append("; __ci_rc=$?; rm -f ").append(RootShell.quote(remote))
                 .append("; exit $__ci_rc");
@@ -278,6 +279,14 @@ final class InstallEngine implements InstallResultReceiver.Listener {
         } else {
             String raw = output.isEmpty() ? ("exit code " + result.code) : output;
             handleFailure(ErrorText.human(raw), raw);
+        }
+    }
+
+    /** Android blocks very old targetSdk packages on newer systems unless explicitly bypassed. */
+    private void appendLowTargetSdkBypass(StringBuilder command) {
+        ApkInfo baseInfo = bundle == null ? null : bundle.baseInfo;
+        if (baseInfo != null && baseInfo.targetSdk > 0 && baseInfo.targetSdk < 23) {
+            command.append(" --bypass-low-target-sdk-block");
         }
     }
 
@@ -308,8 +317,10 @@ final class InstallEngine implements InstallResultReceiver.Listener {
         progress(15);
 
         long total = totalSize(parts);
-        StringBuilder create = new StringBuilder("pm install-create -r -d -S ")
-                .append(total).append(" -i ").append(RootShell.quote(installerName()))
+        StringBuilder create = new StringBuilder("pm install-create -r -d -t");
+        appendLowTargetSdkBypass(create);
+        create.append(" -S ").append(total)
+                .append(" -i ").append(RootShell.quote(installerName()))
                 .append(" --user 0");
         RootShell.Result created = RootShell.run(create.toString(), 120);
         if (failed(created)) {

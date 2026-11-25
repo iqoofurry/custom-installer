@@ -1,6 +1,8 @@
 package com.iqoofurry.sheetinstaller;
 
 import android.app.Activity;
+import android.content.ClipData;
+import android.content.ClipboardManager;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.content.pm.PermissionInfo;
@@ -580,6 +582,7 @@ public class InstallSheetActivity extends Activity implements InstallEngine.Call
         ((TextView) findViewById(R.id.value_sdk)).setText(getString(R.string.value_sdk,
                 analyzed.minSdk, analyzed.targetSdk));
         bindSignature(analyzed);
+        bindHash(analyzed);
         bindAbis(analyzed);
         bindBundle(analyzed);
         bindObb();
@@ -644,6 +647,38 @@ public class InstallSheetActivity extends Activity implements InstallEngine.Call
             value.setText(R.string.sig_match);
             value.setTextColor(Ui.primary(this));
         }
+    }
+
+    /** Строка SHA-256: короткий хэш, тап — копирование и проверка на VirusTotal. */
+    private void bindHash(ApkInfo analyzed) {
+        View row = findViewById(R.id.row_hash);
+        if (row == null) {
+            return;
+        }
+        if (analyzed.sha256 == null || analyzed.sha256.isEmpty()) {
+            row.setVisibility(View.GONE);
+            return;
+        }
+        row.setVisibility(View.VISIBLE);
+        TextView value = findViewById(R.id.value_hash);
+        value.setText(analyzed.sha256.length() > 12
+                ? analyzed.sha256.substring(0, 10) + "… ↗"
+                : analyzed.sha256);
+        row.setOnClickListener(v -> {
+            try {
+                ClipboardManager clipboard =
+                        (ClipboardManager) getSystemService(CLIPBOARD_SERVICE);
+                if (clipboard != null) {
+                    clipboard.setPrimaryClip(
+                            ClipData.newPlainText("SHA-256", analyzed.sha256));
+                    Toast.makeText(this, R.string.hash_copied, Toast.LENGTH_SHORT).show();
+                }
+                startActivity(new Intent(Intent.ACTION_VIEW,
+                        Uri.parse("https://www.virustotal.com/gui/file/" + analyzed.sha256)));
+            } catch (Throwable t) {
+                Log.w(TAG, "Cannot open VirusTotal", t);
+            }
+        });
     }
 
     /** ABI показываем чипами: все в одну строку за счёт уменьшенного паддинга. */
@@ -888,6 +923,25 @@ public class InstallSheetActivity extends Activity implements InstallEngine.Call
         badgeLp.setMarginStart(Ui.dp(this, 10));
         row.addView(badge, badgeLp);
 
+        boolean isNew = info != null && info.installed
+                && info.installedPermissions != null
+                && !info.installedPermissions.contains(permission);
+        if (isNew) {
+            TextView newBadge = new TextView(this);
+            newBadge.setText(R.string.perm_new);
+            newBadge.setTextSize(TypedValue.COMPLEX_UNIT_SP, 10f);
+            newBadge.setLetterSpacing(0.04f);
+            newBadge.setTypeface(Typeface.create("sans-serif-medium", Typeface.NORMAL));
+            newBadge.setTextColor(Ui.onPrimaryContainer(this));
+            newBadge.setBackground(Ui.pillChip(this, Ui.primaryContainer(this)));
+            newBadge.setPadding(bpH, bpV, bpH, bpV);
+            LinearLayout.LayoutParams newBadgeLp = new LinearLayout.LayoutParams(
+                    LinearLayout.LayoutParams.WRAP_CONTENT,
+                    LinearLayout.LayoutParams.WRAP_CONTENT);
+            newBadgeLp.setMarginStart(Ui.dp(this, 12));
+            row.addView(newBadge, newBadgeLp);
+        }
+
         return row;
     }
 
@@ -1027,7 +1081,11 @@ public class InstallSheetActivity extends Activity implements InstallEngine.Call
         setStatusIcon(R.drawable.ic_check, R.color.md_primary);
         progressBar.setVisibility(View.GONE);
         footer.setVisibility(View.VISIBLE);
-        btnInstall.setText(R.string.open);
+        String packageToOpen = resultPackage != null ? resultPackage
+                : (info != null ? info.packageName : null);
+        boolean hasLauncher = packageToOpen != null
+                && getPackageManager().getLaunchIntentForPackage(packageToOpen) != null;
+        btnInstall.setText(hasLauncher ? R.string.open : R.string.app_info);
         btnInstall.setEnabled(true);
         btnInstall.setAlpha(1f);
         btnCancel.setText(R.string.done);
@@ -1148,13 +1206,20 @@ public class InstallSheetActivity extends Activity implements InstallEngine.Call
             return;
         }
         Intent launch = getPackageManager().getLaunchIntentForPackage(pkg);
-        if (launch == null) {
-            Toast.makeText(this, R.string.no_launcher, Toast.LENGTH_LONG).show();
-            return;
+        if (launch != null) {
+            launch.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+            try {
+                startActivity(launch);
+                return;
+            } catch (Throwable t) {
+                Log.w(TAG, "Cannot launch installed package", t);
+            }
         }
-        launch.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        Intent details = new Intent("android.settings.APPLICATION_DETAILS_SETTINGS");
+        details.setData(Uri.parse("package:" + pkg));
+        details.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
         try {
-            startActivity(launch);
+            startActivity(details);
         } catch (Throwable t) {
             Toast.makeText(this, R.string.no_launcher, Toast.LENGTH_LONG).show();
         }

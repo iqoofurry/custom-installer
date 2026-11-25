@@ -86,8 +86,8 @@ build_main() {
         --java "$BUILD/gen" \
         --min-sdk-version 31 \
         --target-sdk-version 36 \
-        --version-code 5 \
-        --version-name 1.3 \
+        --version-code 6 \
+        --version-name 1.4 \
         "$BUILD/res.zip"
 
     # 3. Компилируем Java код

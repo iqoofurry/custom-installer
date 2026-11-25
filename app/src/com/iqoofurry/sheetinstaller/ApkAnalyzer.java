@@ -9,10 +9,13 @@ import android.graphics.drawable.Drawable;
 import android.os.Build;
 
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Enumeration;
 import java.util.HashSet;
 import java.util.List;
@@ -69,6 +72,7 @@ final class ApkAnalyzer {
             info.icon = null;
         }
 
+        info.sha256 = fileSha256(apk);
         info.signerHashes = signerHashes(pkg);
         info.abis = scanAbis(apk);
         if (info.abis.isEmpty()) {
@@ -104,10 +108,14 @@ final class ApkAnalyzer {
     private static void detectInstalled(PackageManager pm, ApkInfo info) {
         try {
             PackageInfo installed = pm.getPackageInfo(info.packageName,
-                    PackageManager.GET_SIGNING_CERTIFICATES);
+                    PackageManager.GET_SIGNING_CERTIFICATES | PackageManager.GET_PERMISSIONS);
             info.installed = true;
             info.installedVersionCode = installed.getLongVersionCode();
             info.installedVersionName = installed.versionName == null ? "—" : installed.versionName;
+            if (installed.requestedPermissions != null) {
+                info.installedPermissions = new HashSet<>(
+                        Arrays.asList(installed.requestedPermissions));
+            }
             Set<String> installedSigners = signerHashes(installed);
             boolean sameSignature = !info.signerHashes.isEmpty()
                     && info.signerHashes.equals(installedSigners);
@@ -177,19 +185,46 @@ final class ApkAnalyzer {
         return result;
     }
 
+    /** SHA-256 всего файла: для XAPK/APKS хэшируется архив, а не распакованный base. */
+    static String fileSha256(File file) {
+        InputStream input = null;
+        try {
+            MessageDigest digest = MessageDigest.getInstance("SHA-256");
+            input = new FileInputStream(file);
+            byte[] buffer = new byte[65536];
+            int read;
+            while ((read = input.read(buffer)) != -1) {
+                digest.update(buffer, 0, read);
+            }
+            return hex(digest.digest());
+        } catch (Throwable t) {
+            return "";
+        } finally {
+            if (input != null) {
+                try {
+                    input.close();
+                } catch (IOException ignored) {
+                }
+            }
+        }
+    }
+
     private static String sha256(byte[] data) {
         try {
             MessageDigest digest = MessageDigest.getInstance("SHA-256");
-            byte[] hash = digest.digest(data);
-            StringBuilder sb = new StringBuilder(hash.length * 2);
-            for (byte b : hash) {
-                sb.append(Character.forDigit((b >> 4) & 0xF, 16));
-                sb.append(Character.forDigit(b & 0xF, 16));
-            }
-            return sb.toString();
+            return hex(digest.digest(data));
         } catch (NoSuchAlgorithmException e) {
             return "";
         }
+    }
+
+    private static String hex(byte[] hash) {
+        StringBuilder sb = new StringBuilder(hash.length * 2);
+        for (byte b : hash) {
+            sb.append(Character.forDigit((b >> 4) & 0xF, 16));
+            sb.append(Character.forDigit(b & 0xF, 16));
+        }
+        return sb.toString();
     }
 
     static String permissionLabel(String permission) {
