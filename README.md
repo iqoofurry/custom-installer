@@ -20,6 +20,6 @@ Custom Installer ставит APK, XAPK и APKS через root, использ�
 
 Для сборки нужны Android SDK Platform 36, Build-tools 36.0.0 и JDK 17 или новее. Запусти `bash tools/build.sh` — скрипт соберёт `dist/CustomInstaller.apk` примерно на 120 КБ через aapt2, javac и d8, без Gradle и Compose. Подпись выполняется ключом из `keystore/custominstaller.jks`.
 
-## 📲 Установка на устройство и лицензия
+## 📄 Лицензия
 
-На устройстве установи APK через `adb root` и `adb shell su -c "pm install -r -t /data/local/tmp/CustomInstaller.apk"`, либо запусти приложение через `adb shell monkey -p com.iqoofurry.sheetinstaller 1`. Проект распространяется под лицензией MIT, автор — iqoofurry.
+Проект распространяется под лицензией MIT. Автор — iqoofurry.
